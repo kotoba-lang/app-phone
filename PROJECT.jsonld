@@ -1,0 +1,120 @@
+{
+  "@context": {
+    "etzhayyim": "https://resources.etzhayyim.com/etzhayyim-project-resources/id/",
+    "schema": "https://schema.org/",
+    "dodaf": "https://resources.etzhayyim.com/etzhayyim-project-resources/id/DM2/",
+    "dependsOn": {
+      "@id": "etzhayyim:dependsOn",
+      "@type": "@id"
+    }
+  },
+  "@type": "etzhayyim:Project",
+  "@id": "https://resources.etzhayyim.com/etzhayyim-project-phone/id/Project/etzhayyim-project-phone",
+  "schema:name": "etzhayyim-project-phone",
+  "schema:description": "Browser-based phone calling platform powered by AWS Connect. Provides WebRTC softphone, call control (dial/answer/hold/transfer/DTMF), call history, and contact management via phone.etzhayyim.com.",
+  "schema:url": "https://phone.etzhayyim.com",
+  "dependsOn": [
+    "https://resources.etzhayyim.com/etzhayyim-project-communicator/id/Project/etzhayyim-project-communicator"
+  ],
+  "dodaf:capability": [
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "Inbound Call Handling",
+      "schema:description": "Accept, reject, and route incoming phone calls via AWS Connect contact flows and queues. WebRTC audio in browser."
+    },
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "Outbound Calling",
+      "schema:description": "Initiate outbound phone calls to PSTN numbers or internal extensions via AWS Connect StartOutboundVoiceContact."
+    },
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "Call Control",
+      "schema:description": "Hold, resume, mute, unmute, send DTMF digits, warm/cold transfer, and conference calls via Amazon Connect Streams API."
+    },
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "Call History and Recording",
+      "schema:description": "Persist call records (caller, callee, duration, disposition) in KV store. Link to AWS Connect call recordings in S3."
+    },
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "Contact Management",
+      "schema:description": "CRUD for phone contacts with name, phone numbers, and tags. Quick-dial from contact list."
+    },
+    {
+      "@type": "dodaf:Capability",
+      "schema:name": "WebRTC Customer Widget",
+      "schema:description": "Embeddable web widget for customer-side in-app calling via StartWebRTCContact + Amazon Chime SDK (no PSTN)."
+    }
+  ],
+  "dodaf:performer": [
+    {
+      "@type": "dodaf:Performer",
+      "schema:name": "phone-component",
+      "schema:description": "TinyGo wasm component at phone.etzhayyim.com. Handles call history CRUD, contact management, and Connect gRPC API for Svelte frontend. Imports etzhayyim:phone/phone for call control delegation to the native provider."
+    },
+    {
+      "@type": "dodaf:Performer",
+      "schema:name": "phone-connect-provider",
+      "schema:description": "Native Go provider (go.spinapp.dev/provider SDK). Wraps AWS Connect APIs (StartOutboundVoiceContact, GetContactAttributes, StartWebRTCContact) and amazon-connect-streams CCP token management. Exports etzhayyim:phone/phone interface via wRPC."
+    }
+  ],
+  "rdfUnifiedDocuments": {
+    "@type": "Dataset",
+    "name": "Unified top-level RDF/JSON-LD documents",
+    "description": "Consolidated from project top-level *.jsonld files except PROJECT.jsonld.",
+    "documents": [
+      {
+        "fileName": "scheduler.jsonld",
+        "content": {
+          "@context": [
+            "https://schema.org/",
+            {
+              "etzhayyim": "https://etzhayyim.com/schemas/",
+              "milestones": "etzhayyim:milestones",
+              "blockers": "etzhayyim:blockers"
+            }
+          ],
+          "@type": "CreativeWork",
+          "name": "etzhayyim-project-phone Scheduler",
+          "identifier": "etzhayyim-project-phone/scheduler",
+          "description": "Project schedule (milestones) and blockers.",
+          "dateCreated": "2026-02-28T00:00:00+00:00",
+          "milestones": [
+            {
+              "name": "M1: WIT + Proto Contract Freeze",
+              "description": "Freeze etzhayyim:phone WIT interface, phone.proto, and WADM link topology.",
+              "dueDate": "2026-03-10"
+            },
+            {
+              "name": "M2: Native Provider MVP (AWS Connect)",
+              "description": "Implement phone-connect-provider with start-call, end-call, hold, resume, send-digits, and transfer.",
+              "dueDate": "2026-03-24"
+            },
+            {
+              "name": "M3: Svelte UI + CCP Integration",
+              "description": "phone.etzhayyim.com Svelte UI with hidden CCP iframe, dial pad, call history, and contact list.",
+              "dueDate": "2026-04-07"
+            },
+            {
+              "name": "M4: Customer WebRTC Widget",
+              "description": "Embeddable widget for customer-side browser calling (StartWebRTCContact + Chime SDK).",
+              "dueDate": "2026-04-21"
+            }
+          ],
+          "blockers": [
+            {
+              "name": "AWS Connect Instance provisioning",
+              "description": "Production AWS Connect instance must be provisioned with phone numbers, contact flows, queues, and routing profiles."
+            },
+            {
+              "name": "SAML federation for Connect auth",
+              "description": "Clerk SSO → AWS SAML 2.0 federation flow must be configured for agent authentication."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
