@@ -1,0 +1,20 @@
+;; app-phone — itonami（dapp）の aiueos アプリ記述子（notes.edn 形）。
+;; 判定コアは aiueos/phone_queue.cljk（発着信・キュー・統計判定）。
+;; 正本は kotoba/src/registry.ts + types.ts。pure（:effects #{}）。
+;; 通話記録と連絡先は E2E 暗号封筒の inner-type。
+{:aiueos/component :app/phone-queue
+ :aiueos/kind :app
+ :aiueos/trust :untrusted
+ :aiueos/source "phone_queue.cljk"
+ :aiueos/wasm "phone_queue.wasm"
+ :aiueos/entry "main"
+ :aiueos/args []
+ :aiueos/imports #{}
+ :aiueos/exports #{:app/main
+                   :app/channel-ok
+                   :app/direction-ok
+                   :app/disposition-ok
+                   :app/queue-create
+                   :app/stat-admission}
+ :aiueos/effects #{}
+ :aiueos/limits {:memory-pages 16 :fuel 5000000}}

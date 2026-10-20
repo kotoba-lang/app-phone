@@ -1,0 +1,83 @@
+(ns phone.queue
+  "phone（電話）判定コア — itonami dapp bundle（pure, :effects #{}）。
+
+  発着信・キュー・統計の判定（正本: kotoba/src/registry.ts + types.ts。
+  通話記録と連絡先は E2E 暗号封筒の inner-type）:
+
+  - **CallChannel**（3）: pstn / extension / webrtcWidget。
+  - **CallDirection**（2）: inbound / outbound。
+  - **CallDisposition**（5）: answered / missed / abandoned / voicemail /
+    transferred。
+  - キュー作成は queueId + label 必須 + channel の検証、**routingTier は
+    与えられたなら 0..100 の整数**（invalidRoutingTier）。
+  - 統計は statId + window 必須 + disposition の検証 + callCount は非負整数。
+
+  channel-ok: 1 = 0..2 の内 / direction-ok: 1 = 0..1 の内
+  disposition-ok: 1 = 0..4 の内
+  queue-create の戻り: 0 = 作成可 / 1 = missingRequiredFields
+    / 2 = invalidChannel / 3 = invalidRoutingTier
+  stat-admission の戻り: 0 = 記録可 / 1 = missingRequiredFields
+    / 2 = invalidDisposition / 3 = invalidCallCount
+
+  実行 host はスカラーのみ = KIR v3 / i64/direct ABI（kernel/selfhost 両対応）。
+
+  テストはゼロ引数 test-*、戻り 1/0:
+  <amu> test aiueos/phone_queue.cljk"
+  (:export [main channel-ok direction-ok disposition-ok queue-create
+            stat-admission test-sets test-queue test-queue-tier test-stat
+            test-fail-closed]))
+
+(defn main [] :i64
+  0)
+
+(defn channel-ok [code :i64] :i64
+  (if (and (>= code 0) (<= code 2)) 1 0))
+
+(defn direction-ok [code :i64] :i64
+  (if (and (>= code 0) (<= code 1)) 1 0))
+
+(defn disposition-ok [code :i64] :i64
+  (if (and (>= code 0) (<= code 4)) 1 0))
+
+(defn queue-create [has-required :i64 channel-code :i64 has-tier :i64 tier-pct-ok :i64] :i64
+  (if (= has-required 0)
+    1
+    (if (= (channel-ok channel-code) 0)
+      2
+      (if (= has-tier 0)
+        0
+        (if (= tier-pct-ok 1) 0 3)))))
+
+(defn stat-admission [has-required :i64 disposition-code :i64 count-uint :i64] :i64
+  (if (= has-required 0)
+    1
+    (if (= (disposition-ok disposition-code) 0)
+      2
+      (if (= count-uint 1) 0 3))))
+
+;; --- tests（戻り 1 = pass） ------------------------------------------------
+
+(defn test-sets [] :i64
+  ;; channel 3 / direction 2 / disposition 5 の閉じた集合
+  (if (= (+ (channel-ok 0) (channel-ok 2) (channel-ok 3)
+            (direction-ok 1) (direction-ok 2)
+            (disposition-ok 4) (disposition-ok 5))
+         4)
+    1 0))
+
+(defn test-queue [] :i64
+  (if (= (+ (queue-create 1 1 0 0) (queue-create 0 1 0 0) (queue-create 1 9 0 0)) 3) 1 0))
+
+(defn test-queue-tier [] :i64
+  ;; routingTier は与えられたら 0..100
+  (if (= (+ (queue-create 1 1 1 1) (queue-create 1 1 1 0)) 3) 1 0))
+
+(defn test-stat [] :i64
+  (if (= (+ (stat-admission 1 2 1) (stat-admission 0 2 1)
+            (stat-admission 1 9 1) (stat-admission 1 2 0))
+         6)
+    1 0))
+
+(defn test-fail-closed [] :i64
+  ;; 集合外は拒否
+  (if (= (+ (channel-ok 7) (disposition-ok 8) (direction-ok 5)) 0) 1 0))

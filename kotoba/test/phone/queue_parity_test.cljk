@@ -1,0 +1,29 @@
+(ns phone.queue-parity-test
+  "aiueos/phone_queue.cljk（判定コア）と正本（registry.ts / types.ts）の
+  parity。閉じた集合・routingTier 規則・E2E inner-type が変われば落ちる。"
+  (:require [clojure.test :refer [deftest is testing]]
+            [clojure.string :as str]
+            ["fs" :as fs]))
+
+(def types-src
+  (fs/readFileSync (str/join "/" ["kotoba" "src" "types.ts"]) "utf8"))
+(def registry
+  (fs/readFileSync (str/join "/" ["kotoba" "src" "registry.ts"]) "utf8"))
+
+(deftest closed-sets-match-guest
+  (testing "guest test-sets: CallChannel 3 / CallDirection 2 / CallDisposition 5"
+    (doseq [s ["pstn" "extension" "webrtcWidget" "inbound" "outbound"
+               "answered" "missed" "abandoned" "voicemail" "transferred"]]
+      (is (str/includes? types-src s)))))
+
+(deftest admission-rules-match-guest
+  (testing "guest test-queue / test-queue-tier: channel 検証と routingTier 0..100"
+    (is (str/includes? registry "invalidChannel"))
+    (is (str/includes? registry "invalidRoutingTier"))
+    (is (str/includes? registry "isPct")))
+  (testing "guest test-stat: disposition 検証と callCount"
+    (is (str/includes? registry "invalidDisposition"))
+    (is (str/includes? registry "invalidCallCount")))
+  (testing "guest の境界: 通話記録と連絡先は E2E inner-type"
+    (is (str/includes? types-src "callRecord"))
+    (is (str/includes? types-src "contact"))))
